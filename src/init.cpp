@@ -806,10 +806,11 @@ void InitParameterInteraction(ArgsManager& args)
 }
 
 /**
- * Initialize global loggers.
+ * Initialize global loggers.  初始化全局记录器。
  *
  * Note that this is called very early in the process lifetime, so you should be
- * careful about what global state you rely on here.
+ * careful about what global state you rely on here.  
+ * 请注意，这是在进程生命周期的早期调用的，因此您应该小心这里所依赖的全局状态。
  */
 void InitLogging(const ArgsManager& args)
 {
@@ -840,6 +841,35 @@ std::set<BlockFilterType> g_enabled_filter_types;
     // The log was successful, terminate now.
     std::terminate();
 };
+
+/**
+ * 预处理指令：
+
+#ifdef _MSC_VER 和 #ifdef WIN32 是条件编译指令，用于在不同平台或使用不同编译器时进行条件编译。在这里，它们分别用于 Microsoft 编译器和 Windows 操作系统。
+Microsoft 编译器设置（仅在 Microsoft 编译器下执行）：
+
+_CrtSetReportMode 和 _CrtSetReportFile 是用于设置 Microsoft 编译器的内存报告模式和文件的函数。在这里，将内存报告模式设置为文件模式，防止输出到控制台。同时，通过设置 _set_abort_behavior 来禁用在中止（abort）、Ctrl-C时显示令人困惑的“有帮助”的文本消息。
+Windows 系统设置（仅在 Windows 下执行）：
+
+HeapSetInformation 用于启用堆的终止处理，当检测到堆损坏时，应用程序会终止。
+网络设置：
+
+SetupNetworking 函数用于初始化网络设置。如果网络初始化失败，返回初始化错误。
+信号处理和系统调用（非 Windows 平台执行）：
+
+在非 Windows 平台上，通过 registerSignalHandler 注册信号处理器。对 SIGTERM 和 SIGINT 信号执行 HandleSIGTERM 函数，对 SIGHUP 信号执行 HandleSIGHUP 函数。此外，通过 signal(SIGPIPE, SIG_IGN) 忽略 SIGPIPE 信号，以防止客户端非正常关闭导致守护进程崩溃。
+Windows 控制台处理（仅在 Windows 下执行）：
+
+SetConsoleCtrlHandler 用于注册控制台控制处理程序 consoleCtrlHandler。
+内存分配错误处理：
+
+std::set_new_handler(new_handler_terminate) 设置新的 new 操作符错误处理程序为 new_handler_terminate 函数。
+函数返回：
+
+返回 true，表示初始化成功。
+这段代码执行了一系列系统和库的初始化工作，确保比特币程序在运行时能够正常工作，并在发生错误时返回适当的错误信息。
+ * 
+*/
 
 bool AppInitBasicSetup(const ArgsManager& args, std::atomic<int>& exit_status)
 {
